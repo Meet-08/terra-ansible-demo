@@ -92,5 +92,9 @@ jobs:
 
       - name: Ansible Playbook
         working-directory: ./ansible
+        env:
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+          DOCKERHUB_USERNAME: ${{ vars.DOCKERHUB_USERNAME }}
+          DOCKERHUB_IMAGE: ${{ vars.DOCKERHUB_IMAGE }}
         run: |
           ansible-playbook -i aws_ec2.yml playbook.yml
