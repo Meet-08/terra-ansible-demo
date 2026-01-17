@@ -72,10 +72,14 @@ jobs:
         with:
           role-arn: "${{ secrets.AWS_ROLE_ARN }}"
 
-      - name: Adding SSH key
+      - name: Write SSH key
+        env:
+          SSH_KEY: ${{ secrets.TF_ANSIBLE_SSH_KEY }}
         run: |
           mkdir -p ~/.ssh
-          printf "%s\n" "$SSH_KEY" > ~/.ssh/tf-ansible.pem
+          cat <<'EOF' > ~/.ssh/tf-ansible.pem
+          $SSH_KEY
+          EOF
           chmod 600 ~/.ssh/tf-ansible.pem
 
       - name: Set up Python
