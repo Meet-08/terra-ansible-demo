@@ -75,10 +75,8 @@ jobs:
       - name: Adding SSH key
         run: |
           mkdir -p ~/.ssh
-          echo "$SSH_KEY" > ~/.ssh/tf-ansible.pem
+          printf "%s\n" "$SSH_KEY" > ~/.ssh/tf-ansible.pem
           chmod 600 ~/.ssh/tf-ansible.pem
-        env:
-          SSH_KEY: ${{ secrets.SSH_KEY }}
 
       - name: Set up Python
         uses: actions/setup-python@v5
