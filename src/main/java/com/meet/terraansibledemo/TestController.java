@@ -36,4 +36,9 @@ public class TestController {
                 </html>
                 """.formatted(LocalDateTime.now(), hostname, activeProfiles, port);
     }
+
+    @GetMapping("/")
+    public String hello() {
+        return "Hello from Spring Boot!";
+    }
 }

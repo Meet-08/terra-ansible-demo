@@ -1,0 +1,94 @@
+name: Deploy to AWS
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  Infrastructure:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: AWS OIDC Auth
+        uses: ./.github/actions/aws_auth
+        with:
+          role-arn: "${{ secrets.AWS_ROLE_ARN }}"
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+
+      - name: Create Infrastructure
+        working-directory: ./terraform
+        run: |
+          terraform init
+          terraform apply -auto-approve
+
+  Build:
+    needs: Infrastructure
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ vars.DOCKERHUB_USERNAME }}/${{ vars.DOCKERHUB_IMAGE }}:latest
+            ${{ vars.DOCKERHUB_USERNAME }}/${{ vars.DOCKERHUB_IMAGE }}:${{ github.sha }}
+
+  Deploy:
+    needs: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: AWS OIDC Auth
+        uses: ./.github/actions/aws_auth
+        with:
+          role-arn: "${{ secrets.AWS_ROLE_ARN }}"
+
+      - name: Adding SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_KEY }}" > ~/.ssh/tf-ansible.pem
+          chmod 600 ~/.ssh/tf-ansible.pem
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Ansible and AWS deps
+        run: |
+          pip install --upgrade pip
+          pip install ansible boto3 botocore
+
+      - name: Ansible Playbook
+        working-directory: ./ansible
+        run: |
+          ansible-playbook -i aws_ec2.yml playbook.yml

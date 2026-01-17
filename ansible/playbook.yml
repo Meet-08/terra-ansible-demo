@@ -3,9 +3,9 @@
   become: true
   hosts: Name_tf_ansible
   vars:
-    docker_username: "{{ lookup('env', 'DOCKER_USERNAME') }}"
-    docker_password: "{{ lookup('env', 'DOCKER_PASSWORD') }}"
-    docker_image: "{{ lookup('env', 'DOCKER_IMAGE') }}"
+    docker_username: "{{ lookup('env', 'DOCKERHUB_USERNAME') }}"
+    docker_password: "{{ lookup('env', 'DOCKERHUB_TOKEN') }}"
+    docker_image: "{{ lookup('env', 'DOCKERHUB_IMAGE') }}"
 
   tasks:
     - name: Installing docker
@@ -17,7 +17,8 @@
     - name: Running application
       docker_container:
         name: "spring_boot_container"
-        image: "{{ docker_username }}/{{ docker_image }}"
+        image: "{{ docker_username }}/{{ docker_image }}:latest"
+        pull: always
         state: started
         restart_policy: always
         ports:
