@@ -74,12 +74,10 @@ jobs:
 
       - name: Write SSH key
         env:
-          SSH_KEY: ${{ secrets.SSH_KEY }}
+          SSH_KEY_B64: ${{ secrets.SSH_KEY }}
         run: |
           mkdir -p ~/.ssh
-          cat <<'EOF' > ~/.ssh/tf-ansible.pem
-          $SSH_KEY
-          EOF
+          echo "$SSH_KEY_B64" | base64 --decode > ~/.ssh/tf-ansible.pem
           chmod 600 ~/.ssh/tf-ansible.pem
 
       - name: Set up Python
