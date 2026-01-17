@@ -1,0 +1,24 @@
+---
+- name: Terraform with ansible demo
+  become: true
+  hosts: Name_tf_ansible
+  vars:
+    docker_username: "{{ lookup('env', 'DOCKER_USERNAME') }}"
+    docker_password: "{{ lookup('env', 'DOCKER_PASSWORD') }}"
+    docker_image: "{{ lookup('env', 'DOCKER_IMAGE') }}"
+
+  tasks:
+    - name: Installing docker
+      apt:
+        name: docker.io
+        state: present
+        update_cache: true
+
+    - name: Running application
+      docker_container:
+        name: "spring_boot_container"
+        image: "{{ docker_username }}/{{ docker_image }}"
+        state: started
+        restart_policy: always
+        ports:
+          - "80:80"
